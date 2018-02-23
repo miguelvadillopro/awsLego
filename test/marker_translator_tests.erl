@@ -42,8 +42,7 @@ marker_to_group_assignation_test() ->
                 [{"marker",170},
                  {"coords",[{"X0",2.5},{"X1",8.5},{"Y0",3.0},{"Y1",8.5}]}]],
 
-    Data_received = marker_translator:marker_clasification(Raw_data),
-    Type = orddict:fetch()Data_received,
+    Data_received = marker_translator:marker_classification(Raw_data),
 
-    ?assertNotEqual([],Data_received).
+    ?assert(lists:all(fun(X) -> (orddict:is_key("type", X)) end,Data_received)).
 
