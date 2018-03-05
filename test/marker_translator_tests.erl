@@ -38,13 +38,30 @@ all_keys(Keys, [Head|Tail], _) ->
 
 
 classification_test() ->
-    Raw_data = [[{?Marker_key,5},
-                 {?Coords_key,[{?X0_key,2.5},{?X1_key,8.0},{?Y0_key,4.0},{?Y1_key,9.5}]}],
-                [{?Coords_key,[{?X0_key,2.5},{?X1_key,8.5},{?Y0_key,3.0},{?Y1_key,8.5}]},
-                 {?Marker_key,17}]],
+%    Raw_data = [[{?Marker_key,5},
+%                 {?Coords_key,[{?X0_key,2.5},{?X1_key,8.0},{?Y0_key,4.0},{?Y1_key,9.5}]}],
+%                [{?Coords_key,[{?X0_key,2.5},{?X1_key,8.5},{?Y0_key,3.0},{?Y1_key,8.5}]},
+%                 {?Marker_key,17}]],
+    Raw_data = [[{?Marker_key, 5}],[{?Marker_key, 17}],[{?Marker_key, 23}]],
    
     Data_received = marker_translator:markers_classification(Raw_data),
 
     ?assert(lists:all(fun(X) -> (orddict:is_key(?Type_key, X)) end,Data_received)),
-    ?assert(lists:all(fun(X) -> (orddict:is_key(?Component_key, X)) end,Data_received)),
-    ?assertEqual(length(Raw_data),length(Data_received)).
+    ?assert(lists:any(fun(X) -> (orddict:is_key(?Component_key, X)) end,Data_received)),
+    ?assertEqual(length(Raw_data),length(Data_received)),
+
+    Element = lists:nth(rand:uniform(length(Data_received)), Data_received),
+    Type = orddict:fetch(?Type_key, Element),
+
+    ?assert(lists:member(Type, [?Group, ?Element, ?Connection])).
+
+forming_groups_test() ->
+
+    Raw_data = [[{?Marker_key,5},
+                 {?Coords_key,[{?X0_key,2.5},{?X1_key,8.0},{?Y0_key,4.0},{?Y1_key,9.5}]}],
+                [{?Coords_key,[{?X0_key,2.5},{?X1_key,8.5},{?Y0_key,3.0},{?Y1_key,8.5}]},
+                 {?Marker_key,17}]],
+
+    Data_received = marker_translator:grouping_elements(Raw_data),
+
+    ?assert(lists:all(fun(X) -> (orddict:is_key(?Groups_key, X)) end, Data_received)).

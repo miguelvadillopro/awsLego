@@ -15,7 +15,8 @@
 -define(Max_element_marker, 20).
 -define(Min_connection_marker, 21).
 -define(Max_connection_marker, 30).
--define(Component_key, "Component").
+-define(Component_key, "component").
+-define(Groups_key, "groups").
 
 -define(EC2, ec2).
 -define(S3, s3).

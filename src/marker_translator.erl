@@ -43,16 +43,31 @@ get_midpoints(Points) ->
 
 
 markers_classification(Markers) -> markers_classification(Markers, []).
-markers_classification([], Markers) -> Markers;
-markers_classification([Head|Tail], Markers) -> markers_classification(Tail, lists:append([classify_marker(Head, [?Types, ?Components])],Markers)).
+markers_classification([], Components) -> Components;
+markers_classification([Head|Tail], Components) -> markers_classification(Tail, lists:append([classify_marker(Head, [?Types, ?Components])],Components)).
 
 classify_marker(Marker, List_classes) -> classify_marker(Marker, orddict:fetch(?Marker_key, orddict:from_list(Marker)), List_classes).
 classify_marker(Marker, _, []) -> Marker;
 classify_marker(Marker, Id, [Head|Tail]) -> {K, V} = get_classification(Id, Head),
-                                            classify_marker(orddict:store(K, V, Marker), Id, Tail).
+                                            if
+                                                K /= null andalso V /= null -> classify_marker(orddict:store(K, V, Marker), Id, Tail);
+                                                true -> classify_marker(Marker, Id, Tail)
+                                            end.
+
 
 get_classification(Id, Classes) -> get_classification(Id, Classes, {}, false).
 get_classification(_, _, Class, true) -> {orddict:fetch("Key", orddict:from_list(Class)), orddict:fetch("Value", orddict:from_list(Class))};
+get_classification(_, [], _, _) -> {null, null};
 get_classification(Id, [Head|Tail], _, _) -> Element_class = lists:member(Id,orddict:fetch("range", orddict:from_list(Head))),
                                              get_classification(Id, Tail, Head, Element_class).
 
+
+
+
+
+
+
+
+grouping_elements(Components) -> grouping_elements(Components, []).
+grouping_elements([], Components) -> Components;
+grouping_elements([Head|Tail],Components) -> 
