@@ -108,7 +108,8 @@ connecting_elements(Components) ->
   Connections = lists:filter(fun(X) -> orddict:fetch(?Type_key, orddict:from_list(X)) == ?Connection end, Components),
 
   Components_with_connections = get_connections(Components, Connections),
-  interconected_elements(Components_with_connections).
+
+  connection_ponderation(Components_with_connections).
 
 
 get_connections (Components, Connections) -> get_connections(Components, Connections, []).
@@ -126,25 +127,6 @@ get_connections ([Head | Tail], Connections, Components) ->
 
   end.
 
-
-%component_connections (Element, Connections) ->
-
-%  X1_connections = lists:filter(fun(Connection) ->
- %                                     connection_filter(orddict:fetch(?Coords_key, orddict:from_list(Element)),
-   %                                                     orddict:fetch(?Coords_key, orddict:from_list(Connection)),
-  %                                                      ?Delta_x, ?X0_key, ?X1_key, ?Y0_key, ?Y1_key, high) end, Connections),
-   % X0_connections = lists:filter(fun(Connection) ->
-    %                                  connection_filter(orddict:fetch(?Coords_key, orddict:from_list(Connection)),
-     %                                                   orddict:fetch(?Coords_key, orddict:from_list(Element)),
-      %                                                  ?Delta_x, ?X0_key, ?X1_key, ?Y0_key, ?Y1_key, low) end, Connections),
-    %Y1_connections = lists:filter(fun(Connection) ->
-     %                                 connection_filter(orddict:fetch(?Coords_key, orddict:from_list(Element)),
-      %                                                  orddict:fetch(?Coords_key, orddict:from_list(Connection)),
-       %                                                 ?Delta_y, ?Y0_key, ?Y1_key, ?X0_key, ?X1_key, high) end, Connections),
-   % Y0_connections = lists:filter(fun(Connection) ->
-    %                                  connection_filter(orddict:fetch(?Coords_key, orddict:from_list(Connection)),
-     %                                                   orddict:fetch(?Coords_key, orddict:from_list(Element)),
-      %                                                  ?Delta_y, ?Y0_key, ?Y1_key, ?X0_key, ?X1_key, low) end, Connections),
 
 component_connections (Element, Connections) ->
 
@@ -194,12 +176,13 @@ inside_element_range(Connection, Element, B0, B1) ->
   orddict:fetch(B1, orddict:from_list(Connection)).
 
 
-interconected_elements(Components) ->
+connection_ponderation(Components) ->
 
   Elements = lists:filter(fun(X) -> orddict:fetch(?Type_key, orddict:from_list(X)) == ?Element end, Components),
-  interconected_elements(Components, [], Elements).
-interconected_elements([], Components, _) -> Components;
-interconected_elements([Head|Tail], Components, Elements) ->
+  connection_ponderation(Components, [], Elements).
+
+connection_ponderation([], Components, _) -> Components;
+connection_ponderation([Head|Tail], Components, Elements) ->
 
   Type_head = orddict:fetch(?Type_key, orddict:from_list(Head)),
 
@@ -220,9 +203,9 @@ interconected_elements([Head|Tail], Components, Elements) ->
       Head_with_groups = orddict:append_list(?Groups_key, get_markers(Filtered_elements), Head),
       Head_wo_connections = orddict:erase(?Connections_key, Head_with_groups),
 
-      interconected_elements(Tail, lists:append([Head_wo_connections],Components),Elements);
+      connection_ponderation(Tail, lists:append([Head_wo_connections],Components),Elements);
 
-    true -> interconected_elements(Tail, lists:append([Head],Components),Elements)
+    true -> connection_ponderation(Tail, lists:append([Head],Components),Elements)
   end.
 
 get_markers(Elements) -> get_markers(Elements, []).
