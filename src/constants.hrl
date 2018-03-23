@@ -17,11 +17,16 @@
 -define(Max_connection_marker, 30).
 -define(Component_key, "component").
 -define(Groups_key, "groups").
+-define(Connections_key, "connections").
+-define(Delta_x, 0.5).
+-define(Delta_y, 0.5).
 
 -define(EC2, ec2).
 -define(S3, s3).
 -define(VP, vp).
 -define(Sub_net, sub_net).
+
+-define(Sorting_key, ?Coords_key).
 
 -define(Types, [[{"range",lists:seq(1,10)},{"Key", ?Type_key},{"Value", ?Group}],
                 [{"range",lists:seq(11,20)},{"Key", ?Type_key},{"Value", ?Element}],
@@ -33,3 +38,4 @@
                      [{"range",lists:seq(11,15)},{"Key", ?Component_key},{"Value", ?EC2}],
                      [{"range",lists:seq(16,20)},{"Key", ?Component_key},{"Value", ?S3}]]).
 
+-define(Connections_ponderation, [{ec2,[s3]}, {s3,[]}]).

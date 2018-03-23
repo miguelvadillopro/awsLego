@@ -57,11 +57,44 @@ classification_test() ->
 
 forming_groups_test() ->
 
-    Raw_data = [[{?Marker_key,5},
-                 {?Coords_key,[{?X0_key,2.5},{?X1_key,8.0},{?Y0_key,4.0},{?Y1_key,9.5}]}],
-                [{?Coords_key,[{?X0_key,2.5},{?X1_key,8.5},{?Y0_key,3.0},{?Y1_key,8.5}]},
-                 {?Marker_key,17}]],
+
+    Raw_data = [[{?Marker_key,21},
+                 {?Coords_key,[{?X0_key,4},{?X1_key,5},{?Y0_key,1},{?Y1_key,2}]},
+                 {?Type_key,"Connection"}],
+                [{?Component_key,vp},
+                 {?Marker_key,5},
+                 {?Coords_key,[{?X0_key,1},{?X1_key,6},{?Y0_key,3},{?Y1_key,6}]},
+                 {?Type_key,"Group"}],
+                [{?Component_key,s3},
+                 {?Coords_key,[{?X0_key,2},{?X1_key,3},{?Y0_key,4},{?Y1_key,5}]},
+                 {?Marker_key,17},
+                 {?Type_key,"Element"}]],
+    
 
     Data_received = marker_translator:grouping_elements(Raw_data),
 
-    ?assert(lists:all(fun(X) -> (orddict:is_key(?Groups_key, X)) end, Data_received)).
+    ?assertEqual(1, length(lists:filter(fun(X) -> orddict:is_key(?Groups_key, X) end, Data_received))).
+
+
+forming_connections_test() ->
+
+   Raw_data = [[{?Marker_key,21},
+                {?Coords_key,[{?X0_key,3},{?X1_key,6},{?Y0_key,1},{?Y1_key,2}]},
+                {?Type_key,"Connection"}],
+               [{?Component_key,ec2},
+                {?Marker_key,12},
+                {?Coords_key,[{?X0_key,1},{?X1_key,2},{?Y0_key,1},{?Y1_key,2}]},
+                {?Type_key,"Element"}],
+               [{?Component_key,s3},
+                {?Coords_key,[{?X0_key,7},{?X1_key,8},{?Y0_key,1},{?Y1_key,2}]},
+                {?Marker_key,17},
+                {?Type_key,"Element"}]],
+    
+
+    Data_received = marker_translator:connecting_elements(Raw_data),
+    Elements_with_groups = lists:filter(fun(X) -> orddict:is_key(?Groups_key, X) end, Data_received),
+
+    ?assertEqual(2, length(Elements_with_groups)),
+    ?assertEqual(1, length(lists:filter(fun(Element) ->
+                                            orddict:fetch(?Groups_key, orddict:from_list(Element)) == [17] end, Elements_with_groups))).
+
