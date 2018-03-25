@@ -1,5 +1,5 @@
 -module(marker_translator).
--export([markers_midpoint_coords/1, markers_classification/1, grouping_elements/1, connecting_elements/1]).
+-export([markers_midpoint_coords/1, markers_classification/1, grouping_elements/1, connecting_elements/1, terraform/1]).
 -include("constants.hrl").
 
 %type_filter(Group) ->
@@ -212,3 +212,45 @@ get_markers(Elements) -> get_markers(Elements, []).
 get_markers([], Markers) -> Markers;
 get_markers([Head|Tail], Markers) -> Marker = orddict:fetch(?Marker_key, orddict:from_list(Head)),
                                      get_markers(Tail, lists:append([Marker], Markers)).
+
+
+
+terraform(Components) ->
+  Components_without_Connections = lists:filter(fun(X) -> orddict:fetch(?Type_key, orddict:from_list(X)) /= ?Connection end, Components),
+  terraform(Components_without_Connections, [], component).
+terraform(Components, dependency) -> terraform(Components, [], dependency).
+terraform([], Components, _) -> Components;
+terraform([Head|Tail], Components, Atom) -> terraform(Tail, lists:append([terraform_template(Head, Atom)], Components)).
+
+terraform_template(Component, component) -> 
+
+  Marker = orddict:fetch(?Marker_key, orddict:from_list(Component)),
+  Component = orddict:fetch(?Component_key, orddict:from_list(Component)),
+
+  Template_resource = orddict:fetch(Marker, ?Terraform_template),
+
+  Have_elements = orddict:is_key(?Groups_key, orddict:from_list(Component)),
+
+
+  if Have_elements ->
+
+       Dependencies = terraform(orddict:fetch(?Groups_key, orddict:from_list(Component)), dependency),
+       Template_dependencies = [{?Terraform_dependency_key, Dependencies}],
+       Template_intagrated = orddict:merge(fun(_, V1, _) -> V1 end, Template_resource, Template_dependencies),
+
+       Resource = [{Marker, Template_intagrated}],
+       [{?Terraform_resource_key, Resource}];
+
+     true -> Resource = [{Marker, Template_resource}],
+             [{?Terraform_resource_key, Resource}]
+  end;
+
+
+
+
+terraform_template(Component, dependency) ->
+
+  Marker = orddict:fetch(?Marker_key, orddict:from_list(Component)),
+  Component = orddict:fetch(?Component_key, orddict:from_list(Component)),
+
+  '"'+ Component + '.' +Marker+ '"'.

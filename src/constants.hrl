@@ -21,9 +21,12 @@
 -define(Delta_x, 0.5).
 -define(Delta_y, 0.5).
 
--define(EC2, ec2).
--define(S3, s3).
--define(VP, vp).
+-define(Terraform_dependency_key, "depends_on").
+-define(Terraform_resource_key, "resource").
+
+-define(EC2,aws_instance).
+-define(S3, aws_s3_bucket).
+-define(VPC, aws_vpc).
 -define(Sub_net, sub_net).
 
 -define(Sorting_key, ?Coords_key).
@@ -33,9 +36,13 @@
                 [{"range",lists:seq(21,30)},{"Key", ?Type_key},{"Value", ?Connection}]]).
 
 
--define(Components, [[{"range",lists:seq(1,5)},{"Key", ?Component_key},{"Value", ?VP}],
+-define(Components, [[{"range",lists:seq(1,5)},{"Key", ?Component_key},{"Value", ?VPC}],
                      [{"range",lists:seq(6,10)},{"Key", ?Component_key},{"Value", ?Sub_net}],
                      [{"range",lists:seq(11,15)},{"Key", ?Component_key},{"Value", ?EC2}],
                      [{"range",lists:seq(16,20)},{"Key", ?Component_key},{"Value", ?S3}]]).
 
--define(Connections_ponderation, [{ec2,[s3]}, {s3,[]}]).
+-define(Connections_ponderation, [{?EC2,[?S3]}, {?S3,[]}]).
+
+-define(Terraform_template, [{12, [{"ami", "ami-2757f631"},{"instance_type", "t2.micro"}]},
+                             {17, [{"bucket", "terraform-getting-starteg-guide"},{"acl", "private"}]},
+                             {5, [{"cidr_block", "10.0.0.0/16"}]}]).

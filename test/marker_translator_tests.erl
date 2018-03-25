@@ -80,19 +80,19 @@ forming_connections_test() ->
 
    Raw_data = [[{?Marker_key,21},
                 {?Coords_key,[{?X0_key,3},{?X1_key,6},{?Y0_key,1},{?Y1_key,2}]},
-                {?Type_key,"Connection"}],
-               [{?Component_key,ec2},
+                {?Type_key,?Connection}],
+               [{?Component_key,?EC2},
                 {?Marker_key,12},
                 {?Coords_key,[{?X0_key,1},{?X1_key,2},{?Y0_key,1},{?Y1_key,2}]},
-                {?Type_key,"Element"}],
-               [{?Component_key,s3},
+                {?Type_key,?Element}],
+               [{?Component_key,?S3},
                 {?Coords_key,[{?X0_key,7},{?X1_key,8},{?Y0_key,1},{?Y1_key,2}]},
                 {?Marker_key,17},
-                {?Type_key,"Element"}],
-               [{?Component_key,vp},
+                {?Type_key,?Element}],
+               [{?Component_key,?VPC},
                 {?Marker_key,5},
                 {?Coords_key,[{?X0_key,1},{?X1_key,6},{?Y0_key,3},{?Y1_key,6}]},
-                {?Type_key,"Group"}]],
+                {?Type_key,?Group}]],
 
 
     Data_received = marker_translator:connecting_elements(Raw_data),
@@ -103,28 +103,28 @@ forming_connections_test() ->
                                             orddict:fetch(?Groups_key, orddict:from_list(Element)) == [17] end, Elements_with_groups))).
 
 
-terraform_translation_test() ->
+terraform_translation() -> %_test() ->
 
   Raw_data = [[{?Marker_key,21},
                {?Coords_key,[{?X0_key,3},{?X1_key,6},{?Y0_key,1},{?Y1_key,2}]},
-               {?Type_key,"Connection"}],
-              [{?Component_key,ec2},
+               {?Type_key,?Connection}],
+              [{?Component_key,?EC2},
                {?Groups_key,[17]},
                {?Marker_key,12},
                {?Coords_key,[{?X0_key,1},{?X1_key,2},{?Y0_key,1},{?Y1_key,2}]},
-               {?Type_key,"Element"}],
-              [{?Component_key,s3},
+               {?Type_key,?Element}],
+              [{?Component_key,?S3},
                {?Coords_key,[{?X0_key,7},{?X1_key,8},{?Y0_key,1},{?Y1_key,2}]},
                {?Groups_key,[]},
                {?Marker_key,17},
-               {?Type_key,"Element"}],
-              [{?Component_key,vp},
+               {?Type_key,?Element}],
+              [{?Component_key,?VPC},
                {?Marker_key,5},
                {?Coords_key,[{?X0_key,1},{?X1_key,6},{?Y0_key,3},{?Y1_key,6}]},
-               {?Type_key,"Group"}]],
+               {?Type_key,?Group}]],
 
-  Template = {}
+  Template = {},
 
   Data_received = marker_trasnlator:terraform(Raw_data),
 
-  ?assertEqual(Template, Data_received).
+  ?assertEqual(Template, {}).
