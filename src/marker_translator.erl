@@ -71,24 +71,24 @@ get_classification(Id, [Head|Tail], _, _) -> Element_class = lists:member(Id,ord
 grouping_elements(Components) ->
     Sorted_components = lists:sort(fun(A, B) -> orddict:fetch(?Sorting_key, orddict:from_list(A)) <
                                                 orddict:fetch(?Sorting_key, orddict:from_list(B)) end, Components),
-    
     grouping_elements(Sorted_components, []).
 
 grouping_elements([], Components) -> Components;
-grouping_elements([Element|Remaining_components], Components) ->
+grouping_elements([Component|Remaining_components], Components) ->
 
-    Updated_element = element_with_groups(Components, Element, orddict:fetch(?Type_key, Element)),
+    Updated_element = element_with_groups(Components, Component, orddict:fetch(?Type_key, Component)),
     grouping_elements(Remaining_components, lists:append([Updated_element], Components)).
 
 
-element_with_groups(_, Element, Type) when Type == ?Connection -> Element;
+element_with_groups(_, Component, Type) when Type == ?Connection -> Component;
 element_with_groups([], Element, _) -> Element;
 element_with_groups([Head|Tail], Element, _) -> element_with_groups(Tail, element_in_group(Head, Element), []).
 
 
 element_in_group(Group, Element) -> element_in_group(Group, Element, [{?X1_key,?X0_key},{?Y1_key,?Y0_key}], true).
 element_in_group(_, Element, _, false) -> Element;
-element_in_group(Group, Element, [], true) -> orddict:append_list(?Groups_key, [orddict:fetch(?Marker_key, Group)], Element);
+%element_in_group(Group, Element, [], true) -> orddict:append_list(?Groups_key, [orddict:fetch(?Marker_key, Group)], Element);
+element_in_group(Group, Element, [], true) -> orddict:append_list(?Groups_key, Group, Element);
 element_in_group(Group, Element, [{K1,K0}|Tail],_) ->
 
     Element_coords = orddict:fetch(?Coords_key, orddict:from_list(Element)),
@@ -145,7 +145,9 @@ component_connections ([[x, Border]|Tail], Element_connections, Element, Connect
                                     connection_filter(Element_coords, Connection_coords, ?Delta_x, ?X0_key, ?X1_key, Border) andalso
                                     inside_element_range(Connection_coords, Element_coords, ?Y0_key, ?Y1_key) end, Connections),
 
-  component_connections(Tail, lists:append([X_connections], Element_connections), Element, Connections);
+  Element_connections_update = lists:append([X_connections], Element_connections),
+
+  component_connections(Tail, Element_connections_update, Element, Connections);
 
 
 component_connections ([[y, Border]|Tail], Element_connections, Element, Connections) ->
@@ -157,7 +159,9 @@ component_connections ([[y, Border]|Tail], Element_connections, Element, Connect
                                     connection_filter(Element_coords, Connection_coords, ?Delta_y, ?Y0_key, ?Y1_key, Border) andalso
                                     inside_element_range(Connection_coords, Element_coords, ?X0_key, ?X1_key) end, Connections),
 
-  component_connections(Tail, lists:append([Y_connections], Element_connections), Element, Connections).
+  Element_connections_update = lists:append([Y_connections], Element_connections),
+
+  component_connections(Tail, Element_connections_update, Element, Connections).
 
 
 
@@ -200,7 +204,8 @@ connection_ponderation([Head|Tail], Components, Elements) ->
 
 
 
-      Head_with_groups = orddict:append_list(?Groups_key, get_markers(Filtered_elements), Head),
+      %Head_with_groups = orddict:append_list(?Groups_key, get_markers(Filtered_elements), Head),
+      Head_with_groups = orddict:append_list(?Groups_key, Filtered_elements, Head),
       Head_wo_connections = orddict:erase(?Connections_key, Head_with_groups),
 
       connection_ponderation(Tail, lists:append([Head_wo_connections],Components),Elements);
@@ -220,14 +225,14 @@ terraform(Components) ->
   terraform(Components_without_Connections, [], component).
 terraform(Components, dependency) -> terraform(Components, [], dependency).
 terraform([], Components, _) -> Components;
-terraform([Head|Tail], Components, Atom) -> terraform(Tail, lists:append([terraform_template(Head, Atom)], Components)).
+terraform([Head|Tail], Components, Atom) -> terraform(Tail, lists:append([terraform_template(Head, Atom)], Components), Atom).
 
 terraform_template(Component, component) -> 
 
   Marker = orddict:fetch(?Marker_key, orddict:from_list(Component)),
-  Component = orddict:fetch(?Component_key, orddict:from_list(Component)),
+  Component_name = orddict:fetch(?Component_key, orddict:from_list(Component)),
 
-  Template_resource = orddict:fetch(Marker, ?Terraform_template),
+  Template_resource = orddict:fetch(Marker, orddict:from_list(?Terraform_template)),
 
   Have_elements = orddict:is_key(?Groups_key, orddict:from_list(Component)),
 
@@ -250,7 +255,9 @@ terraform_template(Component, component) ->
 
 terraform_template(Component, dependency) ->
 
+  erlang:display("COMPONENT DEBUG:"),
+  erlang:display(Component),
   Marker = orddict:fetch(?Marker_key, orddict:from_list(Component)),
-  Component = orddict:fetch(?Component_key, orddict:from_list(Component)),
+  Component_name = orddict:fetch(?Component_key, orddict:from_list(Component)),
 
-  '"'+ Component + '.' +Marker+ '"'.
+  '"'+ Component_name + '.' +Marker+ '"'.
