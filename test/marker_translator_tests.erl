@@ -96,26 +96,34 @@ forming_connections_test() ->
 
 
     Data_received = marker_translator:connecting_elements(Raw_data),
-    Elements_with_groups = lists:filter(fun(X) -> orddict:is_key(?Groups_key, X) end, Data_received),
+    Elements_with_connections = lists:filter(fun(X) -> orddict:is_key(?Groups_key, X) end, Data_received),
+    [First_element|_] = Elements_with_connections,
+    Connections_first_element = orddict:fetch(?Groups_key, orddict:from_list(First_element)),
+    [First_connection|_] = Connections_first_element,
 
-    ?assertEqual(2, length(Elements_with_groups)),
-    ?assertEqual(1, length(lists:filter(fun(Element) ->
-                                            orddict:fetch(?Groups_key, orddict:from_list(Element)) == [17] end, Elements_with_groups))).
+
+    ?assertEqual(1, length(Elements_with_connections)),
+    ?assertEqual(1, length(Connections_first_element)),
+    ?assertEqual(17, orddict:fetch(?Marker_key, orddict:from_list(First_connection))).
 
 
-terraform_translation() -> %_test() ->
+terraform_translation_test() ->
 
   Raw_data = [[{?Marker_key,21},
                {?Coords_key,[{?X0_key,3},{?X1_key,6},{?Y0_key,1},{?Y1_key,2}]},
                {?Type_key,?Connection}],
               [{?Component_key,?EC2},
-               {?Groups_key,[17]},
+               {?Groups_key,[[
+                              {?Component_key,?S3},
+                              {?Coords_key,[{?X0_key,7},{?X1_key,8},{?Y0_key,1},{?Y1_key,2}]},
+                              {?Marker_key,17},
+                              {?Type_key,?Element}]
+                            ]},
                {?Marker_key,12},
                {?Coords_key,[{?X0_key,1},{?X1_key,2},{?Y0_key,1},{?Y1_key,2}]},
                {?Type_key,?Element}],
               [{?Component_key,?S3},
                {?Coords_key,[{?X0_key,7},{?X1_key,8},{?Y0_key,1},{?Y1_key,2}]},
-               {?Groups_key,[]},
                {?Marker_key,17},
                {?Type_key,?Element}],
               [{?Component_key,?VPC},
@@ -123,8 +131,8 @@ terraform_translation() -> %_test() ->
                {?Coords_key,[{?X0_key,1},{?X1_key,6},{?Y0_key,3},{?Y1_key,6}]},
                {?Type_key,?Group}]],
 
-  Template = {},
+  Data_received = marker_translator:terraform(Raw_data),
 
-  Data_received = marker_trasnlator:terraform(Raw_data),
+  Resources = lists:filter(fun(X) -> orddict:is_key(?Terraform_resource_key, X) end, Data_received),
 
-  ?assertEqual(Template, {}).
+  ?assertEqual(3, length(Resources)).

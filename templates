@@ -29,18 +29,18 @@ Classified_data = [[{"component",aws_vpc},
 
 Grouped_data = marker_translator:grouping_elements(Classified_data).
 
-Grouped_data = [[{"component",aws_s3_bucket},
+Grouped_data = [[{"component","aws_s3_bucket"},
   {"coords",[{"X0",7},{"X1",8},{"Y0",1},{"Y1",2}]},
   {"marker",17},
   {"type","Element"}],
  [{"marker",21},
   {"coords",[{"X0",3},{"X1",6},{"Y0",1},{"Y1",2}]},
   {"type","Connection"}],
- [{"component",aws_vpc},
+ [{"component","aws_vpc"},
   {"marker",5},
   {"coords",[{"X0",1},{"X1",6},{"Y0",3},{"Y1",6}]},
   {"type","Group"}],
- [{"component",aws_instance},
+ [{"component","aws_instance"},
   {"marker",12},
   {"coords",[{"X0",1},{"X1",2},{"Y0",1},{"Y1",2}]},
   {"type","Element"}]].
@@ -48,23 +48,33 @@ Grouped_data = [[{"component",aws_s3_bucket},
 
 Connected_data = marker_translator:connecting_elements(Grouped_data).
 
-Connected_data = [[{"component",aws_s3_bucket},
+[[{"component","aws_s3_bucket"},
   {"coords",[{"X0",7},{"X1",8},{"Y0",1},{"Y1",2}]},
-  {"groups",[]},
   {"marker",17},
   {"type","Element"}],
- [{"marker",21},
-  {"coords",[{"X0",3},{"X1",6},{"Y0",1},{"Y1",2}]},
-  {"type","Connection"}],
- [{"component",aws_vpc},
+ [{"component","aws_instance"},
+  {"groups",
+   [[{"component","aws_s3_bucket"},
+     {"connections",
+      [[],[],
+       [[{"marker",21},
+         {"coords",[{"X0",3},{"X1",6},{"Y0",1},{"Y1",2}]},
+         {"type","Connection"}]],
+       []]},
+     {"coords",[{"X0",7},{"X1",8},{"Y0",1},{"Y1",2}]},
+     {"marker",17},
+     {"type","Element"}]]},
+  {"marker",12},
+  {"coords",[{"X0",1},{"X1",2},{"Y0",1},{"Y1",2}]},
+  {"type","Element"}],
+ [{"component","aws_vpc"},
   {"marker",5},
   {"coords",[{"X0",1},{"X1",6},{"Y0",3},{"Y1",6}]},
   {"type","Group"}],
- [{"component",aws_instance},
-  {"groups",[17]},
-  {"marker",12},
-  {"coords",[{"X0",1},{"X1",2},{"Y0",1},{"Y1",2}]},
-  {"type","Element"}]].
+ [{"marker",21},
+  {"coords",[{"X0",3},{"X1",6},{"Y0",1},{"Y1",2}]},
+  {"type","Connection"}]]
+
 
 Terraform_translation = marker_translator:terraform (Connected_data).
 

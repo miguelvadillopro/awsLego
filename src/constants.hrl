@@ -24,10 +24,10 @@
 -define(Terraform_dependency_key, "depends_on").
 -define(Terraform_resource_key, "resource").
 
--define(EC2,aws_instance).
--define(S3, aws_s3_bucket).
--define(VPC, aws_vpc).
--define(Sub_net, sub_net).
+-define(EC2,"aws_instance").
+-define(S3, "aws_s3_bucket").
+-define(VPC, "aws_vpc").
+-define(Sub_net, "sub_net").
 
 -define(Sorting_key, ?Coords_key).
 

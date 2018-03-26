@@ -183,40 +183,38 @@ inside_element_range(Connection, Element, B0, B1) ->
 connection_ponderation(Components) ->
 
   Elements = lists:filter(fun(X) -> orddict:fetch(?Type_key, orddict:from_list(X)) == ?Element end, Components),
-  connection_ponderation(Components, [], Elements).
+  Components_wo_elements = Components -- Elements,
+  connection_ponderation(Elements, Components_wo_elements, Elements).
 
 connection_ponderation([], Components, _) -> Components;
-connection_ponderation([Head|Tail], Components, Elements) ->
-
-  Type_head = orddict:fetch(?Type_key, orddict:from_list(Head)),
-
-  if
-    Type_head == ?Element ->
-
-      Connected_elements = lists:filter(fun(Element) -> length(orddict:fetch(?Connections_key, orddict:from_list(Head))) >
-                                                        length(orddict:fetch(?Connections_key, orddict:from_list(Head)) --
-                                                             orddict:fetch(?Connections_key, orddict:from_list(Element))) end, Elements),
-      Type = orddict:fetch(?Component_key, orddict:from_list(Head)),
-
-      Filtered_elements = lists:filter(fun(Element) -> length(orddict:fetch(Type, orddict:from_list(?Connections_ponderation))) >
-                                                       length(orddict:fetch(Type, orddict:from_list(?Connections_ponderation)) --
-                                                              [orddict:fetch(?Component_key, orddict:from_list(Element))]) end, Connected_elements),
+connection_ponderation([Head|Tail], Components, Elements) -> 
 
 
+  Connected_elements = lists:filter(fun(Element) -> length(orddict:fetch(?Connections_key, orddict:from_list(Head))) >
+                                                    length(orddict:fetch(?Connections_key, orddict:from_list(Head)) --
+                                                           orddict:fetch(?Connections_key, orddict:from_list(Element))) end, Elements),
 
-      %Head_with_groups = orddict:append_list(?Groups_key, get_markers(Filtered_elements), Head),
-      Head_with_groups = orddict:append_list(?Groups_key, Filtered_elements, Head),
-      Head_wo_connections = orddict:erase(?Connections_key, Head_with_groups),
+  Type = orddict:fetch(?Component_key, orddict:from_list(Head)),
 
-      connection_ponderation(Tail, lists:append([Head_wo_connections],Components),Elements);
 
-    true -> connection_ponderation(Tail, lists:append([Head],Components),Elements)
+  Filtered_elements = lists:filter(fun(Element) -> length(orddict:fetch(Type, orddict:from_list(?Connections_ponderation))) >
+                                                   length(orddict:fetch(Type, orddict:from_list(?Connections_ponderation)) --
+                                                          [orddict:fetch(?Component_key, orddict:from_list(Element))]) end, Connected_elements),
+
+
+  if length(Filtered_elements) > 0 ->
+       Head_with_groups = orddict:append_list(?Groups_key, Filtered_elements, Head),
+       Head_wo_connections = orddict:erase(?Connections_key, Head_with_groups),
+
+       connection_ponderation(Tail, lists:append([Head_wo_connections],Components),Elements);
+
+     true ->
+
+       Head_wo_connections = orddict:erase(?Connections_key, Head),
+
+       connection_ponderation(Tail, lists:append([Head_wo_connections],Components),Elements)
+
   end.
-
-get_markers(Elements) -> get_markers(Elements, []).
-get_markers([], Markers) -> Markers;
-get_markers([Head|Tail], Markers) -> Marker = orddict:fetch(?Marker_key, orddict:from_list(Head)),
-                                     get_markers(Tail, lists:append([Marker], Markers)).
 
 
 
@@ -230,7 +228,6 @@ terraform([Head|Tail], Components, Atom) -> terraform(Tail, lists:append([terraf
 terraform_template(Component, component) -> 
 
   Marker = orddict:fetch(?Marker_key, orddict:from_list(Component)),
-  Component_name = orddict:fetch(?Component_key, orddict:from_list(Component)),
 
   Template_resource = orddict:fetch(Marker, orddict:from_list(?Terraform_template)),
 
@@ -241,9 +238,10 @@ terraform_template(Component, component) ->
 
        Dependencies = terraform(orddict:fetch(?Groups_key, orddict:from_list(Component)), dependency),
        Template_dependencies = [{?Terraform_dependency_key, Dependencies}],
-       Template_intagrated = orddict:merge(fun(_, V1, _) -> V1 end, Template_resource, Template_dependencies),
+       Template_integrated = orddict:merge(fun(_, V1, _) -> V1 end, Template_resource, Template_dependencies),
 
-       Resource = [{Marker, Template_intagrated}],
+
+       Resource = [{Marker, Template_integrated}],
        [{?Terraform_resource_key, Resource}];
 
      true -> Resource = [{Marker, Template_resource}],
@@ -255,9 +253,7 @@ terraform_template(Component, component) ->
 
 terraform_template(Component, dependency) ->
 
-  erlang:display("COMPONENT DEBUG:"),
-  erlang:display(Component),
   Marker = orddict:fetch(?Marker_key, orddict:from_list(Component)),
   Component_name = orddict:fetch(?Component_key, orddict:from_list(Component)),
 
-  '"'+ Component_name + '.' +Marker+ '"'.
+  Component_name ++ "." ++ integer_to_list(Marker).
