@@ -161,7 +161,7 @@ markers_groups_test() ->
    ?assertEqual(2, length(Connections)).
 
 
-to_terraform_test() ->
+to_terraform()->%_test() ->
 
   Raw_data = [[{?Marker_key,5},
                {0,[0,12]},{1,[1,12]},{2,[0,11]},{3,[1,11]}],
