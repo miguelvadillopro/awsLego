@@ -1,6 +1,6 @@
 -module(marker_translator).
--export([markers_midpoint_coords/1, markers_classification/1, grouping_elements/1, connecting_elements/1, terraform/1,
-         grouping_markers/1]).
+-export([markers_midpoint_coords/1, markers_classification/1, grouping_elements/1, connecting_elements/1, terraform_translation/1,
+         grouping_markers/1, to_terraform/1]).
 -include("constants.hrl").
 
 %type_filter(Group) ->
@@ -204,7 +204,7 @@ connection_ponderation([Head|Tail], Components, Elements) ->
 
 
   if length(Filtered_elements) > 0 ->
-       Head_with_groups = orddict:append_list(?Groups_key, Filtered_elements, Head),
+       Head_with_groups = orddict:append_list(?Groups_key, [Filtered_elements], Head),
        Head_wo_connections = orddict:erase(?Connections_key, Head_with_groups),
 
        connection_ponderation(Tail, lists:append([Head_wo_connections],Components),Elements);
@@ -219,12 +219,12 @@ connection_ponderation([Head|Tail], Components, Elements) ->
 
 
 
-terraform(Components) ->
+terraform_translation(Components) ->
   Components_without_Connections = lists:filter(fun(X) -> orddict:fetch(?Type_key, orddict:from_list(X)) /= ?Connection end, Components),
-  terraform(Components_without_Connections, [], component).
-terraform(Components, dependency) -> terraform(Components, [], dependency).
-terraform([], Components, _) -> Components;
-terraform([Head|Tail], Components, Atom) -> terraform(Tail, lists:append([terraform_template(Head, Atom)], Components), Atom).
+  terraform_translation(Components_without_Connections, [], component).
+terraform_translation(Components, dependency) -> terraform_translation(Components, [], dependency).
+terraform_translation([], Components, _) -> Components;
+terraform_translation([Head|Tail], Components, Atom) -> terraform_translation(Tail, lists:append([terraform_template(Head, Atom)], Components), Atom).
 
 terraform_template(Component, component) -> 
 
@@ -237,7 +237,7 @@ terraform_template(Component, component) ->
 
   if Have_elements ->
 
-       Dependencies = terraform(orddict:fetch(?Groups_key, orddict:from_list(Component)), dependency),
+       Dependencies = terraform_translation(orddict:fetch(?Groups_key, orddict:from_list(Component)), dependency),
        Template_dependencies = [{?Terraform_dependency_key, Dependencies}],
        Template_integrated = orddict:merge(fun(_, V1, _) -> V1 end, Template_resource, Template_dependencies),
 
@@ -254,6 +254,8 @@ terraform_template(Component, component) ->
 
 terraform_template(Component, dependency) ->
 
+  erlang:display("Component Debug"),
+  erlang:display(Component),
   Marker = orddict:fetch(?Marker_key, orddict:from_list(Component)),
   Component_name = orddict:fetch(?Component_key, orddict:from_list(Component)),
 
@@ -267,12 +269,24 @@ terraform_template(Component, dependency) ->
 
 grouping_markers(Components) ->
 
-  Markers = get_markers_set(Components),
-  grouping_markers(Markers, [], Components).
+  Connections = get_connections(Components),
+  Components_wo_connections = Components -- Connections,
+  Markers = get_markers_set(Components_wo_connections),
+  grouping_markers(Markers, Connections, Components_wo_connections).
 grouping_markers([], Grouped_components, _) -> Grouped_components;
 grouping_markers([Marker|Remaining_markers], Grouped_components, Components) ->
   Coords = get_max_coords(Marker, Components),
   grouping_markers(Remaining_markers, lists:append([[{?Marker_key, Marker},{?Coords_key, Coords}]], Grouped_components), Components).
+
+
+get_connections(Components) ->
+
+  Markers_range = lists:filter(fun(X)-> orddict:fetch("Value",orddict:from_list(X)) == ?Connection end, ?Types),
+  [Connections_markers|_] = Markers_range,
+  lists:filter(fun(X) ->
+                   lists:member(
+                     orddict:fetch(?Marker_key, orddict:from_list(X)),
+                     orddict:fetch("range", orddict:from_list(Connections_markers))) end, Components).
 
 
 get_markers_set(Components) -> get_markers_set(Components, []).
@@ -319,3 +333,10 @@ max_coords([Component|Remaining_components], Coords) ->
 
 
   max_coords(Remaining_components, Coords_y).
+
+
+
+to_terraform(Markers) ->
+
+  terraform_translation(connecting_elements(grouping_elements(markers_classification(grouping_markers(markers_midpoint_coords(Markers)))))).
+

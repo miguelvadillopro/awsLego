@@ -131,7 +131,7 @@ terraform_translation_test() ->
                {?Coords_key,[{?X0_key,1},{?X1_key,6},{?Y0_key,3},{?Y1_key,6}]},
                {?Type_key,?Group}]],
 
-  Data_received = marker_translator:terraform(Raw_data),
+  Data_received = marker_translator:terraform_translation(Raw_data),
 
   Resources = lists:filter(fun(X) -> orddict:is_key(?Terraform_resource_key, X) end, Data_received),
 
@@ -139,18 +139,53 @@ terraform_translation_test() ->
 
 markers_groups_test() ->
 
-
-   Raw_data = [[{?Marker_key,5},
+  Raw_data = [[{?Marker_key,5},
                 {?Coords_key,[{?X0_key,0},{?X1_key,1},{?Y0_key,0},{?Y1_key,1}]}],
                [{?Marker_key,5},
                 {?Coords_key,[{?X0_key,4},{?X1_key,5},{?Y0_key,0},{?Y1_key,1}]}],
                [{?Marker_key,5},
                 {?Coords_key,[{?X0_key,0},{?X1_key,1},{?Y0_key,4},{?Y1_key,5}]}],
                [{?Marker_key,5},
+                {?Coords_key,[{?X0_key,0},{?X1_key,1},{?Y0_key,4},{?Y1_key,5}]}],
+               [{?Marker_key,21},
                 {?Coords_key,[{?X0_key,4},{?X1_key,5},{?Y0_key,4},{?Y1_key,5}]}],
+               [{?Marker_key,21},
+                {?Coords_key,[{?X0_key,2},{?X1_key,3},{?Y0_key,2},{?Y1_key,3}]}],
                [{?Coords_key,[{?X0_key,2},{?X1_key,3},{?Y0_key,2},{?Y1_key,3}]},
                 {?Marker_key,17}]],
 
    Data_received = marker_translator:grouping_markers(Raw_data),
+   Connections = lists:filter(fun(X) -> orddict:fetch(?Marker_key, orddict:from_list(X)) == 21  end, Data_received),
 
-   ?assertEqual(2, length(Data_received)).
+   ?assertEqual(4, length(Data_received)),
+   ?assertEqual(2, length(Connections)).
+
+
+to_terraform_test() ->
+
+  Raw_data = [[{?Marker_key,5},
+               {0,[0,12]},{1,[1,12]},{2,[0,11]},{3,[1,11]}],
+              [{?Marker_key,5}, 
+               {0,[11,12]},{1,[12,12]},{2,[11,11]},{3,[12,11]}],
+              [{?Marker_key,5},
+               {0,[0,1]},{1,[1,1]},{2,[0,0]},{3,[1,0]}],
+              [{?Marker_key,5},
+               {0,[11,1]},{1,[12,1]},{2,[11,0]},{3,[12,0]}],
+              [{?Marker_key,5},
+               {0,[0,12]},{1,[1,12]},{2,[0,11]},{3,[1,11]}],
+              [{?Marker_key,12},
+               {0,[2,10]},{1,[4,10]},{2,[2,8]},{3,[4,8]}],
+              [{?Marker_key,21},
+               {0,[5,10]},{1,[6,10]},{2,[5,9]},{3,[6,9]}],
+              [{?Marker_key,21},
+               {0,[7,3]},{1,[8,3]},{2,[7,2]},{3,[8,2]}],
+              [{?Marker_key,17},
+               {0,[9,4]},{1,[11,4]},{2,[9,2]},{3,[11,2]}]],
+
+  Data_received = marker_translator:to_terraform(Raw_data),
+
+  Resources = lists:filter(fun(X) -> orddict:is_key(?Terraform_resource_key, X) end, Data_received),
+
+  ?assertEqual(3, length(Resources)).
+
+
