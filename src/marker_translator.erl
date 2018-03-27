@@ -1,5 +1,6 @@
 -module(marker_translator).
--export([markers_midpoint_coords/1, markers_classification/1, grouping_elements/1, connecting_elements/1, terraform/1]).
+-export([markers_midpoint_coords/1, markers_classification/1, grouping_elements/1, connecting_elements/1, terraform/1,
+         grouping_markers/1]).
 -include("constants.hrl").
 
 %type_filter(Group) ->
@@ -257,3 +258,64 @@ terraform_template(Component, dependency) ->
   Component_name = orddict:fetch(?Component_key, orddict:from_list(Component)),
 
   Component_name ++ "." ++ integer_to_list(Marker).
+
+
+
+
+
+
+
+grouping_markers(Components) ->
+
+  Markers = get_markers_set(Components),
+  grouping_markers(Markers, [], Components).
+grouping_markers([], Grouped_components, _) -> Grouped_components;
+grouping_markers([Marker|Remaining_markers], Grouped_components, Components) ->
+  Coords = get_max_coords(Marker, Components),
+  grouping_markers(Remaining_markers, lists:append([[{?Marker_key, Marker},{?Coords_key, Coords}]], Grouped_components), Components).
+
+
+get_markers_set(Components) -> get_markers_set(Components, []).
+get_markers_set([], Markers) -> Set_of_markers = sets:from_list(Markers),
+                                sets:to_list(Set_of_markers);
+get_markers_set([Component|Remaining_components], Markers) ->
+  get_markers_set(Remaining_components, lists:append([orddict:fetch(?Marker_key, orddict:from_list(Component))], Markers)).
+
+get_max_coords(Marker, Components) ->
+
+  Components_same_marker = lists:filter(fun(X) -> orddict:fetch(?Marker_key, orddict:from_list(X)) == Marker end, Components),
+
+  max_coords(Components_same_marker, []).
+
+max_coords([], Coords) ->
+
+  X_coords = orddict:fetch(x, Coords),
+  Y_coords = orddict:fetch(y, Coords),
+
+  X_sorted_coords = lists:sort(X_coords),
+  Y_sorted_coords = lists:sort(Y_coords),
+
+  [X0|_] = X_sorted_coords,
+  [X1|_] = lists:reverse(X_sorted_coords),
+  [Y0|_] = Y_sorted_coords,
+  [Y1|_] = lists:reverse(Y_sorted_coords),
+
+  [{?X0_key, X0},{?X1_key, X1},{?Y0_key, Y0},{?Y1_key, Y1}];
+
+
+max_coords([Component|Remaining_components], Coords) ->
+  Coords_component = orddict:fetch(?Coords_key,orddict:from_list(Component)),
+
+  X0 = orddict:fetch(?X0_key, Coords_component),
+  X1 = orddict:fetch(?X1_key, Coords_component),
+  Y0 = orddict:fetch(?Y0_key, Coords_component),
+  Y1 = orddict:fetch(?Y1_key, Coords_component),
+
+  Xs = lists:append([X0],[X1]),
+  Ys = lists:append([Y0],[Y1]),
+
+  Coords_x = orddict:append_list(x, Xs, Coords),
+  Coords_y = orddict:append_list(y, Ys, Coords_x),
+
+
+  max_coords(Remaining_components, Coords_y).

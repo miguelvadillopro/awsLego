@@ -136,3 +136,21 @@ terraform_translation_test() ->
   Resources = lists:filter(fun(X) -> orddict:is_key(?Terraform_resource_key, X) end, Data_received),
 
   ?assertEqual(3, length(Resources)).
+
+markers_groups_test() ->
+
+
+   Raw_data = [[{?Marker_key,5},
+                {?Coords_key,[{?X0_key,0},{?X1_key,1},{?Y0_key,0},{?Y1_key,1}]}],
+               [{?Marker_key,5},
+                {?Coords_key,[{?X0_key,4},{?X1_key,5},{?Y0_key,0},{?Y1_key,1}]}],
+               [{?Marker_key,5},
+                {?Coords_key,[{?X0_key,0},{?X1_key,1},{?Y0_key,4},{?Y1_key,5}]}],
+               [{?Marker_key,5},
+                {?Coords_key,[{?X0_key,4},{?X1_key,5},{?Y0_key,4},{?Y1_key,5}]}],
+               [{?Coords_key,[{?X0_key,2},{?X1_key,3},{?Y0_key,2},{?Y1_key,3}]},
+                {?Marker_key,17}]],
+
+   Data_received = marker_translator:grouping_markers(Raw_data),
+
+   ?assertEqual(2, length(Data_received)).
